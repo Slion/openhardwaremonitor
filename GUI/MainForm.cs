@@ -35,7 +35,8 @@ namespace OpenHardwareMonitor.GUI {
     private IDictionary<ISensor, Color> sensorPlotColors = 
       new Dictionary<ISensor, Color>();
     private Color[] plotColorPalette;
-    private SystemTray systemTray;    
+    private SystemTray systemTray;
+    private SharpDisplay sharpDisplay;
     private StartupManager startupManager = new StartupManager();
     private UpdateVisitor updateVisitor = new UpdateVisitor();
     private SensorGadget gadget;
@@ -51,6 +52,8 @@ namespace OpenHardwareMonitor.GUI {
     private UserOption minimizeToTray;
     private UserOption minimizeOnClose;
     private UserOption autoStart;
+    private UserOption sharpDisplayPacked; //Tells whether SharpDisplay should cycle or pack sensors
+    private UserOption sharpDisplayShowTime; //Tells whether or not SharpDisplay should display current time
 
     private UserOption readMainboardSensors;
     private UserOption readCpuSensors;
@@ -125,11 +128,15 @@ namespace OpenHardwareMonitor.GUI {
       treeView.Model = treeModel;
 
       this.computer = new Computer(settings);
-
+       
+      //System tray
       systemTray = new SystemTray(computer, settings, unitManager);
       systemTray.HideShowCommand += hideShowClick;
       systemTray.ExitCommand += exitClick;
-
+      //Sharp Display Manager
+      sharpDisplay = new SharpDisplay(computer, settings, unitManager);
+      
+      //
       int p = (int)Environment.OSVersion.Platform;
       if ((p == 4) || (p == 128)) { // Unix
         treeView.RowHeight = Math.Max(treeView.RowHeight, 18); 
@@ -220,6 +227,10 @@ namespace OpenHardwareMonitor.GUI {
           autoStart.Value = startupManager.Startup;
         }
       };
+
+      sharpDisplayPacked = new UserOption("sharpDisplayPackedMenuItem", false, sharpDisplayPackedMenuItem, settings);
+      sharpDisplayShowTime = new UserOption("sharpDisplayShowTimeMenuItem", false, sharpDisplayShowTimeMenuItem, settings);
+
 
       readMainboardSensors = new UserOption("mainboardMenuItem", true, 
         mainboardMenuItem, settings);
@@ -480,6 +491,14 @@ namespace OpenHardwareMonitor.GUI {
           if (plotMenuItem.Checked && sensorNode != null &&
             sensorPlotColors.TryGetValue(sensorNode.Sensor, out color))
             e.TextColor = color;
+
+          //If displayed in SharpDisplay draw background in blue
+          if (sensorNode != null && settings.GetValue(new Identifier(sensorNode.Sensor.Identifier, "SharpDisplay").ToString(), false))
+          {
+              SolidBrush aquaBrush = new SolidBrush(Color.FromName("aqua"));
+              e.BackgroundBrush = aquaBrush;
+          }
+
         } else {
           e.TextColor = Color.DarkGray;
         }
@@ -557,6 +576,11 @@ namespace OpenHardwareMonitor.GUI {
       if (wmiProvider != null)
         wmiProvider.Update();
 
+      if (sharpDisplay != null)
+      {
+          sharpDisplay.Redraw(sharpDisplayPacked.Value, sharpDisplayShowTime.Value);
+      }  
+
 
       if (logSensors != null && logSensors.Value && delayCount >= 4)
         logger.Log();
@@ -625,6 +649,7 @@ namespace OpenHardwareMonitor.GUI {
       if (runWebServer.Value)
           server.Quit();
       systemTray.Dispose();
+      sharpDisplay.Dispose();
     }
 
     private void aboutMenuItem_Click(object sender, EventArgs e) {
@@ -683,6 +708,18 @@ namespace OpenHardwareMonitor.GUI {
                 systemTray.Add(node.Sensor, true);
             };
             treeContextMenu.MenuItems.Add(item);
+          }
+          {
+              MenuItem item = new MenuItem("Show in SharpDisplay");
+              item.Checked = sharpDisplay.Contains(node.Sensor);
+              item.Click += delegate(object obj, EventArgs args)
+              {
+                  if (item.Checked)
+                      sharpDisplay.Remove(node.Sensor);
+                  else
+                      sharpDisplay.Add(node.Sensor, true);
+              };
+              treeContextMenu.MenuItems.Add(item);
           }
           if (gadget != null) {
             MenuItem item = new MenuItem("Show in Gadget");

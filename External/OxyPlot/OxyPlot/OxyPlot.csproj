@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OxyPlot</RootNamespace>
     <AssemblyName>OxyPlot</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -93,7 +93,6 @@
     <Compile Include="Foundation\IDataPoint.cs" />
     <Compile Include="Foundation\ReflectionHelper.cs" />
     <Compile Include="Foundation\ScreenPointHelper.cs" />
-    <Compile Include="LinqBridge.cs" />
     <Compile Include="Manipulators\ZoomManipulator.cs" />
     <Compile Include="Manipulators\ZoomStepManipulator.cs" />
     <Compile Include="Manipulators\ResetManipulator.cs" />

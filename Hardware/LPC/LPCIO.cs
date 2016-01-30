@@ -205,8 +205,9 @@ namespace OpenHardwareMonitor.Hardware.LPC {
         case 0xC8:
           switch (revision) {
             case 0x03:
-              chip = Chip.NCT6791D;
-              logicalDeviceNumber = WINBOND_NUVOTON_HARDWARE_MONITOR_LDN;
+              //SL: disabling because of fan spinning issue
+              //chip = Chip.NCT6791D;
+              //logicalDeviceNumber = WINBOND_NUVOTON_HARDWARE_MONITOR_LDN;
               break;
           } break;
       }
